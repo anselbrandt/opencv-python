@@ -1,8 +1,10 @@
 import cv2 as cv
 import numpy as np
+from PIL import Image
 
 speeds = "train.txt"
-video = "short.mp4"
+video = "half_second.mp4"
+
 
 def line_reader(file_name):
     for row in open(file_name, "r"):
@@ -35,7 +37,9 @@ mask = np.zeros_like(first_frame)
 # Sets image saturation to maximum
 mask[..., 1] = 255
 
-while(cap.isOpened()):
+i = 0
+
+while cap.isOpened():
 
     try:
         # ret = a boolean return value from getting
@@ -54,9 +58,9 @@ while(cap.isOpened()):
         gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
         # Calculates dense optical flow by Farneback method
-        flow = cv.calcOpticalFlowFarneback(prev_gray, gray,
-                                        None,
-                                        0.5, 3, 15, 3, 5, 1.2, 0)
+        flow = cv.calcOpticalFlowFarneback(
+            prev_gray, gray, None, 0.5, 3, 15, 3, 5, 1.2, 0
+        )
 
         # Computes the magnitude and angle of the 2D vectors
         magnitude, angle = cv.cartToPolar(flow[..., 0], flow[..., 1])
@@ -72,6 +76,12 @@ while(cap.isOpened()):
         # Converts HSV to RGB (BGR) color representation
         rgb = cv.cvtColor(mask, cv.COLOR_HSV2BGR)
 
+        # Save optical flow to image file
+        im = Image.fromarray(rgb)
+        filename = "images/flow" + str(i) + ".jpg"
+        im.save(filename)
+        i = i + 1
+
         # Opens a new window and displays the output frame
         cv.imshow("dense optical flow", rgb)
 
@@ -85,9 +95,9 @@ while(cap.isOpened()):
         # Frames are read by intervals of 1 millisecond. The
         # programs breaks out of the while loop when the
         # user presses the 'q' key
-        if cv.waitKey(1) & 0xFF == ord('q'):
+        if cv.waitKey(1) & 0xFF == ord("q"):
             break
-    
+
     except:
         cap.release()
         cv.destroyAllWindows()
